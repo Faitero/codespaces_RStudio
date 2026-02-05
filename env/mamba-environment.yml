@@ -1,0 +1,15 @@
+name: rnaseq-tools
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - mamba
+  - pip
+  - fastqc
+  - multiqc
+  - salmon
+  - star
+  - samtools
+  - seqtk
+  - bedtools

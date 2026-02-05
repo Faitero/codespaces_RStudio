@@ -1,0 +1,6 @@
+Gene_expression_practical_UNAV_cache/*
+Gene_expression_practical_UNAV_files/*
+
+*.tab
+*.rds
+Merge_GO_Gene_Set_Enrichment_Analysis_CC_.pdf

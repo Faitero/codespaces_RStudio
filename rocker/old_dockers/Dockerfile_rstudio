@@ -1,0 +1,47 @@
+FROM rocker/rstudio:4.3.0
+
+LABEL org.opencontainers.image.licenses="GPL-2.0-or-later" \
+      org.opencontainers.image.source="https://github.com/rocker-org/rocker-versioned2" \
+      org.opencontainers.image.vendor="Rocker Project" \
+      org.opencontainers.image.authors="Carl Boettiger <cboettig@ropensci.org>"
+
+ENV S6_VERSION=v2.1.0.2
+ENV RSTUDIO_VERSION=2023.06.0+421
+ENV DEFAULT_USER=rstudio
+ENV PANDOC_VERSION=default
+ENV QUARTO_VERSION=default
+
+RUN /rocker_scripts/install_pandoc.sh
+RUN /rocker_scripts/install_quarto.sh
+RUN /rocker_scripts/install_tidyverse.sh
+RUN /rocker_scripts/install_rstudio.sh
+
+RUN install2.r --error --deps TRUE --skipmissing --skipinstalled \
+    BiocManager\
+    rmarkdown \
+    tidyverse \
+    dplyr \
+    knitr \
+    airway \
+    SummarizedExperiment \
+    DESeq2 \
+    DelayedArray \
+    vsn \
+    ggplot2 \
+    hexbin \
+    pheatmap \
+    RColorBrewer \
+    ggbeeswarm \
+    apeglm \
+    ggrepel \
+    AnnotationDbi \
+    org.Hs.eg.db \
+    clusterProfiler \
+    enrichplot 
+
+EXPOSE 8787
+
+# FROM rocker/rstudio:4.0.0
+# RUN /rocker_scripts/install_shiny_server.sh
+
+CMD ["/init"]

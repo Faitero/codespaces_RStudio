@@ -1,0 +1,196 @@
+---
+title: "Assesment_R_Programming_Basics"
+author: "Igor Ruiz de los Mozos"
+format: html
+code-copy: true
+page-layout: full
+---
+
+# Assessment: `biomed_data.csv` Exploration & Analysis
+
+**Instructions:**  
+- Create a new R script or R Markdown document named `STUDENT_NAME_biomed_analysis.Rmd`.  This could be a Word transformed to PDF but I encourage you to learn markdown.  
+- For each question below, include  (a) the R code you used, 
+                                    (b) any plots or summary tables, and 
+                                    (c) a brief written interpretation (2–4 sentences).  
+- Knit your R Markdown to HTML or PDF and submit the rendered document.
+
+---
+
+## 1. Linear Modeling & Interpretation
+
+0. **Prepare enviroment and load dataset**
+```{r}
+# Set your working directory once per session
+getwd()
+setwd("/home/rstudio")
+
+# Install required libraries once:
+install.packages(c("tidyverse", "viridis", "GGally"))
+# Load & packages
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(GGally)
+
+# Load & Inspect
+biomed <- read_csv("/home/rstudio/biomed_data.csv", show_col_types = FALSE)
+glimpse(biomed)      # columns & types
+summary(biomed)      # summary stats & NAs
+
+```
+
+
+1. **Fit a multiple linear regression**  
+```{r}
+
+lm_fit <- lm(expression ~ marker_B + dose + group, data = biomed)
+summary(lm_fit)
+```
+
+Report the estimated coefficient for marker_B, doseMedium, doseHigh, and groupTreated.
+
+Interpret each coefficient in the context of how expression changes per unit increase in marker_B and between dose/group categories (holding other variables constant).
+
+Assess model assumptions
+
+Produce the 4 base R diagnostic plots:
+
+```{r}
+par(mfrow = c(2,2))
+plot(lm_fit)
+```
+
+Identify any potential outliers or non-constant variance. Which plot indicates this, and what would you do next?
+
+## 2. Two-Way ANOVA & Interaction
+Fit a two-way ANOVA
+
+```{r}
+aov_fit <- aov(expression ~ group * dose, data = biomed)
+summary(aov_fit)
+```
+
+Report the F-value and p-value for the group:dose interaction term.
+
+Interpret whether there is a statistically significant interaction between treatment group and dose on expression.
+
+Post-hoc comparisons (optional, bonus)
+
+Use TukeyHSD(aov_fit) to examine pairwise differences. Which combinations of group × dose differ significantly?
+
+## 3. Missing-Value Imputation & Re-visualisation
+Impute marker_C with its median
+
+```{r}
+med_C <- median(biomed$marker_C, na.rm = TRUE)
+biomed_imputed <- biomed %>%
+  mutate(marker_C = ifelse(is.na(marker_C), med_C, marker_C))
+```
+
+Re-plot the histogram of marker_C before and after imputation side by side (use gridExtra::grid.arrange or patchwork).
+
+Comment on how the distribution changed.
+
+## 4. New Factor & Comparative Boxplots
+Create an age_group factor
+
+```{r}
+biomed2 <- biomed %>%
+  mutate(age_group = cut(age,
+                         breaks = c(-Inf,35,60,Inf),
+                         labels = c("<35","35–60",">60")))
+```
+
+Boxplot heart_rate by age_group with points overlaid (geom_jitter).
+
+Describe any trends you observe (e.g., does heart rate vary by age group?).
+
+## 5. Tidying & Faceted Violin Plots (Challenge)
+Pivot all marker_ columns longer
+
+```{r}
+biomed_long <- biomed %>%
+  pivot_longer(cols = starts_with("marker_"),
+               names_to = "marker_type",
+               values_to = "marker_value")
+```
+
+Create violin plot of marker_value by marker_type, colored by group.
+
+```{r}
+ggplot(biomed_long, aes(marker_type, marker_value, fill = group)) +
+  geom_violin(alpha = .6, trim = FALSE) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Explain which markers show the largest differences between Control and Treated.
+
+## 6. Extended Exploratory Questions for `biomed_data.csv`
+
+Use these prompts to guide deeper, self-driven investigations of the mock cohort. Pick a handful for your project or discussion. *Choose at least seven of these prompts to pursue in your final report. For each, provide code, output (tables/plots), and a brief biological or statistical interpretation.*
+
+
+1. **Multivariate Correlations**  
+   - Which pairs of biomarkers (A–E) show the strongest positive or negative correlations? How does this change when stratified by treatment `group` or `dose`?
+
+2. **Predicting Expression**  
+   - Build a multiple regression (or regularized model) predicting `expression` from all five `marker_*` variables plus `age` and `sex`. Which predictors are most important?
+
+3. **Dose–Response Curves**  
+   - For each `group` (Control vs Treated), plot the mean ± standard error of `marker_D` across `dose` levels. Do dose–response curves diverge between groups?
+
+4. **Age Effects and Interactions**  
+   - Create an `age_band` (< 35, 35–60, > 60) and test whether the effect of `dose` on `expression` differs across age bands (three-way interaction: `expression ~ group * dose * age_band`).
+
+5. **Regional Variation**  
+   - Compare biomarker distributions among the four `region`s using box-plots and one-way ANOVA. Which region shows the highest mean `marker_C`, and is it statistically different?
+
+6. **Missing-Data Sensitivity**  
+   - Impute missing values in `marker_A` and `marker_C` using median, mean, and k-nearest neighbors. Recompute a key summary (e.g., mean of each marker by `group`) and describe how results vary by imputation method.
+
+7. **Patient Clustering**  
+   - Perform hierarchical clustering or k-means on the numeric biomarkers. How many clusters “make sense”? Do clusters align with `group`, `dose`, or `region`?
+
+8. **Principal Component Analysis (PCA)**  
+   - Run PCA on the five `marker_*` columns. Plot PC1 vs PC2, coloured by `group` and sized by `dose`. What biological patterns emerge on the principal component axes?
+
+9. **Outlier Investigation**  
+   - Identify patients whose `expression` lies > 3 SDs from the mean. Examine their full profiles—do they share any common characteristics (age, group, dose, region)?
+
+10. **Time-to-Event Simulation** *(Bonus)*  
+    - Assume `expression` is a surrogate for time to clinical response. Simulate a binary outcome (`response = expression > threshold`) and fit a logistic regression. Interpret odds ratios for `marker_B` and `dose`.
+
+11. **Model Diagnostics**  
+    - For your `lm(expression ~ marker_B + dose + group)` model, generate residual vs fitted, QQ, and Cook’s distance plots. Which observations drive the model fit?
+
+12. **Interaction Visualization**  
+    - Use `ggplot2::geom_interaction()` or custom line plots to visualize any significant three-way interactions (e.g., `marker_E ~ group * dose * sex`).  
+
+13. **Heatmap of Biomarker Z-Scores**  
+    - Standardize each `marker_*` to Z-scores and plot a patient-by-marker heatmap (rows = patients, columns = markers). Cluster both dimensions to reveal co-expression modules.
+
+14. **Effect of Sex**  
+    - Test whether the `group:dose` interaction on `expression` differs between `sex` by fitting separate models or including a three-way interaction: `expression ~ group * dose * sex`. Summarize the findings.
+
+15. **Reproducible Reporting**  
+    - Package your entire analysis in an R Markdown report with clear section headers, narrative interpretations, and embedded code: set `code-copy: true` in the YAML and ensure every plot is accompanied by a concise caption.
+
+16. **Correlation heatmap **
+    - Compute the correlation matrix for all numeric columns (marker_A–marker_E, expression, heart_rate, RBC_count). Plot it as a heatmap (geom_tile) with a diverging color scale. Identify the strongest positive and negative correlations and speculate on their biological meaning.
+
+17. **Group-wise summary table**
+    - Produce a summary table showing, for each region, the mean and standard deviation of expression and heart_rate. Display it in R as a nicely formatted tibble, and export to CSV.
+
+18. **Outlier detection**
+    - For each numeric variable, compute how many observations lie more than 3 standard deviations from the mean. Discuss whether these outliers should be retained or investigated further.
+
+---
+
+## Submission Checklist
+ R Markdown file (biomed_analysis.Rmd) with answers, code, and narrative.
+
+ Rendered HTML/PDF output with plots and tables.
+
+ Any export files (e.g., region_summary.csv) if requested.

@@ -1,0 +1,277 @@
+---
+title: "Instructor script"
+author: "Igor Ruiz de los Mozos"
+format: html
+code-copy: true     
+---
+
+
+# Instructor Notes • Generating **`biomed_data.csv`** (200‑Patient Mock Cohort)
+
+> **Purpose**  
+> Produce a *rich*, realistic dataset for practical classes on R‑based data wrangling, visualization, linear models, and interaction effects.  
+> Students will **only** receive the final **`biomed_data.csv`** file—**never** this script.  
+> Keep this document in your private teaching repository.
+
+---
+
+## 1  Key Pedagogical Design Goals
+
+| Goal | How the script achieves it | Example classroom use |
+|------|---------------------------|-----------------------|
+| **Multiple categorical factors** | `sex`, `group`, `dose`, `region` | Box‑plots, multi‑factor faceting |
+| **Continuous outcomes with signal + noise** | `marker_*`, `expression`, `heart_rate`, `RBC_count` | Correlation heat‑maps, regression lines |
+| **Embedded interactions** | `marker_E` boosted for *Treated × Dose*, `expression` boosted for *Treated × High* | Two‑way ANOVA, interaction plots |
+| **Age‑dependent effects** | RBC drop and HR shift for ages > 60; HR boost for ages < 35 | Stratified summaries, spline fits |
+| **Missing data** | 5 random `NA`s in 4 key columns | `na.omit`, `tidyr::fill`, `mice` imputation intro |
+| **Correlated predictors** | `marker_B` partially depends on `marker_A`, `marker_E` on `marker_B` | Multicollinearity discussion, `car::vif()` |
+| **Reasonable biological ranges** | Means/SDs mirror typical lab units | Realism ≈ stronger student engagement |
+
+---
+
+## 2  Full R Script (run **once**, then distribute the CSV)
+
+```{r}
+# ---------------------------------------------------------
+# Script to Create an Extended biomed_data.csv (Instructor Only)
+# Contains 200 patients + nuanced patterns for teaching
+# ---------------------------------------------------------
+
+set.seed(1234)                            # reproducible random numbers
+n <- 200                                  # cohort size
+
+## --- Base demographic & design factors --------------------------------------
+patient_id <- paste0("P", 1:n)
+sex        <- sample(c("Male", "Female"), n, TRUE)
+age        <- sample(25:75, n, TRUE)
+group      <- sample(c("Control", "Treated"), n, TRUE)
+region     <- sample(c("North","South","East","West"), n, TRUE)
+dose       <- sample(c("Low","Medium","High"), n, TRUE)
+
+## --- Primary biomarkers -----------------------------------------------------
+marker_A <- round(rnorm(n,  5,  1), 2)    # baseline 5 ±1
+marker_B <- round(rnorm(n, 10,  2), 2)    # baseline 10 ±2
+marker_C <- round(rnorm(n, 50,  5), 2)    # baseline 50 ±5
+marker_D <- round(rnorm(n,  1, 0.3), 2)   # baseline 1 ±0.3
+expression <- round(rnorm(n, 8, 2), 2)    # baseline 8 ±2
+heart_rate <- sample(60:100, n, TRUE)     # 60–100 bpm int
+
+## --- RBC_count (sex + age effect) ------------------------------------------
+RBC_count <- numeric(n)
+for(i in seq_len(n)) {
+  RBC_count[i] <- rnorm(1,
+                        mean = ifelse(sex[i]=="Male", 4.9, 4.3),
+                        sd   = 0.3)
+  if(age[i] > 60) RBC_count[i] <- RBC_count[i] - runif(1, 0.1, 0.2)
+}
+RBC_count <- round(RBC_count, 2)
+
+## --- marker_E: tied to B + treatment/dose offsets ---------------------------
+marker_E <- numeric(n)
+for(i in seq_len(n)) {
+  marker_E[i] <- marker_B[i]*0.5 + rnorm(1, 5, 1)
+  if(group[i]=="Treated" & dose[i]=="Medium") marker_E[i] <- marker_E[i] + 0.5
+  if(group[i]=="Treated" & dose[i]=="High")   marker_E[i] <- marker_E[i] + 1.0
+}
+marker_E <- round(marker_E, 2)
+
+## --- Potent treatment effect on D & expression ------------------------------
+high_idx <- which(group=="Treated" & dose=="High")
+marker_D[high_idx] <- marker_D[high_idx] + round(runif(length(high_idx),0.5,1.5), 2)
+expression[high_idx] <- expression[high_idx] + round(runif(length(high_idx),3,5), 2)
+
+## --- Correlation: B partially depends on A ----------------------------------
+marker_B <- round(marker_B + 0.5*marker_A + rnorm(n, 0, 1), 2)
+
+## --- Heart‑rate modulation by age -------------------------------------------
+heart_rate <- heart_rate +
+              ifelse(age<35,  sample(0:5, n, TRUE),
+              ifelse(age>60, -sample(0:5, n, TRUE), 0))
+heart_rate <- round(pmin(pmax(heart_rate, 50), 110))
+
+## --- Inject missing values ---------------------------------------------------
+for(col in c("marker_A","marker_C","expression","RBC_count")) {
+  idx <- sample(n, 5)
+  switch(col,
+         marker_A   = {marker_A[idx] <- NA},
+         marker_C   = {marker_C[idx] <- NA},
+         expression = {expression[idx] <- NA},
+         RBC_count  = {RBC_count[idx] <- NA})
+}
+
+## --- Assemble & export -------------------------------------------------------
+biomed_data <- data.frame(
+  patient_id, sex, age, group, region, dose,
+  marker_A, marker_B, marker_C, marker_D, marker_E,
+  expression, heart_rate, RBC_count
+)
+
+write.csv(biomed_data, "biomed_data.csv", row.names = FALSE)
+
+cat("biomed_data.csv generated ✅ (", nrow(biomed_data), "rows)\n")
+head(biomed_data)
+
+```
+
+## 3  Quick Validity Checks (run right after generation)
+```{r}
+
+biomed <- read.csv("biomed_data.csv")
+str(biomed)            # all columns
+summary(biomed)        # quick sanity
+```
+
+Spot‑check:
+
+High‑dose treated patients should show higher marker_D and expression.
+
+marker_A → marker_B correlation ≈ 0.5–0.6.
+
+Males’ RBC_count > Females’.
+
+
+## 3  Suggested Exploratory Plots (for lecture slides or demo)
+### 3.1 Demographics
+```{r}
+
+# ── Global ggplot2 defaults ────────────────────────────────────────
+library(ggplot2)
+library(viridis)    # for colour‑blind friendly palettes
+theme_set(theme_bw(base_size = 14))   # cleaner look everywhere
+
+ggplot(biomed, aes(x = age, fill = sex)) +
+  geom_histogram(position = "identity", alpha = .6, bins = 20) +
+  labs(title = "Age distribution by sex") +
+  theme_classic()
+
+#  Age Density by Sex
+ggplot(biomed, aes(age, fill = sex, colour = sex)) +
+  geom_density(alpha = .35, adjust = 1.3) +
+  scale_fill_viridis_d(option="D") +
+  scale_colour_viridis_d(option="D") +
+  labs(title = "Age distribution by sex",
+       x = "Age (years)", y = "Density")
+
+# Sex × Group Mosaic (stacked percents)
+
+library(dplyr)
+tbl <- biomed |>
+  count(sex, group) |>
+  group_by(sex) |>
+  mutate(pct = n / sum(n))
+
+ggplot(tbl, aes(sex, pct, fill = group)) +
+  geom_col(width = .6) +
+  geom_text(aes(label = scales::percent(pct,1)),
+            position = position_stack(vjust = .5), colour = "white") +
+  scale_fill_viridis_d(option="D") +
+  labs(title = "Proportion of Control vs Treated within each sex",
+       y = "Percent within sex")
+# 
+```
+
+### 3.2 Dose Effects on expression
+```{r}
+
+ggplot(biomed, aes(x = dose, y = expression, fill = group)) +
+  geom_boxplot() +
+  labs(title = "Expression ~ Group × Dose") +
+  theme_bw()
+
+
+ggplot(biomed, aes(interaction(group,dose), expression,
+                   fill = dose)) +
+  geom_violin(trim = FALSE, alpha = .35) +
+  geom_boxplot(width = .15,
+               position = position_dodge(width = .9),
+               outlier.shape = NA, colour = "black") +
+  scale_fill_viridis_d(option="D") +
+  labs(x = "Group · Dose", y = "Expression",
+       title = "Expression distribution across Group & Dose") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+### 3.3 Correlated Markers
+```{r}
+
+ggplot(biomed, aes(marker_A, marker_B, color = dose)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Partial correlation: marker_B vs marker_A") +
+  theme_minimal()
+
+ggplot(biomed, aes(marker_A, marker_B, colour = dose)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_colour_viridis_d(option="D") +
+  labs(title = "marker_B vs marker_A coloured by dose")
+
+```
+
+### 3.4 Treatment Boost on marker_D
+```{r}
+
+ggplot(biomed, aes(group, marker_D, fill = dose)) +
+  geom_violin(trim = FALSE) +
+  geom_boxplot(width = .2, color = "black", outlier.shape = NA) +
+  labs(title = "Marker D distribution across Group & Dose") +
+  theme_light()
+
+
+```
+
+### 3.5 Regional Heat‑map of Mean marker_C
+
+Teaching cue: ask which region might require different reference ranges.
+
+```{r}
+
+library(dplyr)
+region_means <- biomed |>
+  group_by(region) |>
+  summarise(meanC = mean(marker_C, na.rm = TRUE)) |>
+  arrange(desc(meanC))
+
+ggplot(region_means, aes(reorder(region, meanC), 1, fill = meanC))+
+  geom_tile(height = .6) +
+  geom_text(aes(label = round(meanC,1)), colour = "white", size = 5) +
+  scale_fill_viridis_c(option="C") +
+  labs(title = "Regional mean of marker_C",
+       fill = "Mean\nmarker_C") +
+  theme_void() +
+  theme(legend.position = "right",
+        plot.title = element_text(hjust=.5, face="bold"))
+```
+
+### 3.6 Pairwise Matrix for Key Numeric Variables
+
+How to read
+• Lower panels: scatter → identify clustering/outliers.
+• Upper panels: Pearson r value. Highlight |r| > 0.5.
+• Diagonal: distribution shape (skew, bimodal).
+
+```{r}
+BiocManager::install("GGally")
+library(GGally)
+
+numvars <- biomed[, c("marker_A","marker_B","marker_E",
+                      "expression","RBC_count","heart_rate")]
+ggpairs(numvars,
+        aes(color = biomed$group, alpha = .6),
+        upper = list(continuous = wrap("cor", size = 4))) +
+  labs(title = "Scatter, density & correlation (colour = group)")
+
+```
+
+### 4  Planned Classroom Analyses
+
+| Topic                                                 | Code Starter                                                       | Learning Outcome                      |
+| ----------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------- |
+| **ANOVA**<br>(`expression ~ group * dose`)            | `summary(aov(expression ~ group*dose, data=biomed))`               | spotting interaction                  |
+| **Multiple linear regression**                        | `lm(marker_E ~ marker_B + dose + group, biomed)`                   | collinearity & categorical predictors |
+| **Logistic (optional)**<br>Create `HR_high` (>90 bpm) | `glm(HR_high ~ age + sex + group, family=binomial, data=biomed)`   | odds ratios                           |
+| **Handling missing data**                             | `biomed %>% summarise(across(where(is.numeric), ~mean(is.na(.))))` | NA diagnostics                        |
+| **Imputation intro**                                  | `library(mice); mice(biomed[ ,7:14])`                              | multiple imputation overview          |
+
+

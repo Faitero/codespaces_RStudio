@@ -1,0 +1,52 @@
+FROM rocker/tidyverse:latest
+
+# Created with 4.3.2 on Feb 2024
+LABEL org.opencontainers.image.licenses="GPL-2.0-or-later" \
+      org.opencontainers.image.source="https://github.com/rocker-org/rocker-versioned2" \
+      org.opencontainers.image.vendor="Rocker Project" \
+      org.opencontainers.image.authors="Igor Ruiz de los Mozos <iruizdeaATnasertic.es>"
+
+ENV CTAN_REPO=https://mirror.ctan.org/systems/texlive/tlnet
+ENV PATH=$PATH:/usr/local/texlive/bin/linux
+ENV S6_VERSION=v2.1.0.2
+ENV RSTUDIO_VERSION=default
+ENV DEFAULT_USER=rstudio
+ENV PANDOC_VERSION=default
+ENV QUARTO_VERSION=default
+
+
+RUN /rocker_scripts/install_verse.sh
+RUN /rocker_scripts/install_pandoc.sh
+RUN /rocker_scripts/install_quarto.sh
+
+# Install missing libraries
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libglpk40
+
+RUN apt-get update
+RUN R -e 'BiocManager::install(ask = F)' && R -e 'BiocManager::install(c("airway", \
+    "SummarizedExperiment", "DESeq2", "DelayedArray", "vsn", "apeglm", "AnnotationDbi", "org.Hs.eg.db", "igraph", "clusterProfiler", "enrichplot", ask = F))'
+
+
+# Install.packages 
+RUN install2.r --error --skipinstalled --ncpus -1 \
+    BiocManager\
+    rmarkdown \
+    tidyverse \
+    dplyr \
+    knitr \
+    ggplot2 \
+    hexbin \
+    pheatmap \
+    RColorBrewer \
+    ggbeeswarm \
+    ggrepel 
+
+# Clean up
+RUN rm -rf /tmp/downloaded_packages \
+    && strip /usr/local/lib/R/site-library/*/libs/*.so \
+    && rm -rf /var/lib/apt/lists/*
+
+EXPOSE 8787
+
+CMD ["/init"]
