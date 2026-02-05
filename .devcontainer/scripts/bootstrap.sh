@@ -1,29 +1,31 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Temporary: skip apt heavy install while testing base Codespaces image
-# sudo apt-get update
-# sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-#   build-essential \
-#   libssl-dev \
-#   libcurl4-openssl-dev \
-#   libxml2-dev \
-#   libfontconfig1-dev \
-#   libharfbuzz-dev \
-#   libfribidi-dev \
-#   libfreetype6-dev \
-#   libpng-dev \
-#   libtiff5-dev \
-#   libjpeg-dev \
-#   libgsl-dev \
-#   libxt-dev \
-#   libglpk-dev \
-#   libudunits2-dev \
-#   procps \
-#   wget \
-#   git \
-#   locales
-# sudo rm -rf /var/lib/apt/lists/*
+# Minimal native build toolchain for R/Bioconductor source installs.
+# (git/wget/locales already provided by the base image.)
+APT_DEPS=(
+  build-essential
+  libssl-dev
+  libcurl4-openssl-dev
+  libxml2-dev
+  libfontconfig1-dev
+  libharfbuzz-dev
+  libfribidi-dev
+  libfreetype6-dev
+  libpng-dev
+  libtiff5-dev
+  libjpeg-dev
+  libgsl-dev
+  libxt-dev
+  libglpk-dev
+  libudunits2-dev
+)
+if [ "${#APT_DEPS[@]}" -gt 0 ]; then
+  sudo apt-get update
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${APT_DEPS[@]}"
+  sudo apt-get clean
+  sudo rm -rf /var/lib/apt/lists/*
+fi
 
 # Guarantee UTF-8 locale for RStudio sessions
 if ! locale -a | grep -q "en_US.utf8"; then
