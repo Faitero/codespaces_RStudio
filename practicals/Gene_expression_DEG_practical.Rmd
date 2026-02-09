@@ -117,7 +117,7 @@ se <- airway
 
 # Load directory from Windows
 # directory <- "C:/Users/d682011.ADMON-CFNAVARRA/OneDrive - NAVARRA SOCIEDADES PÚBLICAS/Others/classes/Unav2023"
-directory <- "/home/rstudio"
+directory <- "/workspaces/codespaces_RStudio/course_materials/RNA_seq_DEG"
 
 setwd(directory)
 list.files()
