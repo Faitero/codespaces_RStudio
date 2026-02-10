@@ -8,12 +8,14 @@ author: "Igor Ruiz de los Mozos PhD"
 NOTE to render install `quarto install tinytex`
 
 **Start Codespaces to run this practical on the cloud!**
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/FairTeach/codespaces_RStudio?quickstart=1)
+[![Open in GitHub Codespaces](figures/badge.svg)](https://codespaces.new/FairTeach/codespaces_RStudio?quickstart=1)
 
 **Continue GitHub Codespaces practical on the cloud!**
-[![Continue GitHub Codespaces](https://img.shields.io/badge/GitHub-Codespaces-181717?logo=github)](https://github.com/codespaces)
+[![Continue GitHub Codespaces](figures/GitHub-Codespaces-181717.svg)](https://github.com/codespaces)
+    
 
 > **Programme:** Master’s in Biomedical Engineering • **Module:** Advanced Bioinformatics  
+> **Programme:** Master’s in Data Science • **Module:** Análisis e interpretación de datos de alto rendimiento  
 > **Lesson ** R Fundamentals, Data Wrangling & Visualisation  
 
 ---
@@ -61,7 +63,7 @@ R is an essential tool for bioinformatics due to its flexibility, extensive libr
 
 
 ```{r setup}
-knitr::opts_knit$set(root.dir = "/workspaces/codespaces_RStudio/course_materials/R_basics")
+# knitr::opts_knit$set(root.dir = "/workspaces/codespaces_RStudio/course_materials/R_basics")
 
 # Set your working directory once per session
 getwd()
