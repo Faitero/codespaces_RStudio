@@ -1,6 +1,6 @@
 # Render folders
-Gene_expression_practical_UNAV_cache/*
-Gene_expression_practical_UNAV_files/*
+practicals/Gene_expression_DEG_practical_*
+practicals/Gene_expression_practical_UNAV_files/*
 practicals/R_Programming_basics_practical_files*
 
 *.tab

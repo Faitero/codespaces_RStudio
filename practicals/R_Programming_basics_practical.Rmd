@@ -3,9 +3,15 @@ title: "R Programming Basics – Hands-On Practical"
 format: pdf
 code-copy: true
 page-layout: full
-author: "Igor Ruiz de los Mozos"
+author: "Igor Ruiz de los Mozos PhD"
 ---
-NOTE to render instal `quarto install tinytex`
+NOTE to render install `quarto install tinytex`
+
+**Start Codespaces to run this practical on the cloud!**
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/FairTeach/codespaces_RStudio?quickstart=1)
+
+**Continue GitHub Codespaces practical on the cloud!**
+[![Continue GitHub Codespaces](https://img.shields.io/badge/GitHub-Codespaces-181717?logo=github)](https://github.com/codespaces)
 
 > **Programme:** Master’s in Biomedical Engineering • **Module:** Advanced Bioinformatics  
 > **Lesson ** R Fundamentals, Data Wrangling & Visualisation  

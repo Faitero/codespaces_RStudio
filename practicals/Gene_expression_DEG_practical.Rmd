@@ -1,14 +1,15 @@
 ---
-title: "Gene Expression Practical"
+title: "Gene Expression DEG Practical"
+format: pdf
+code-copy: true
+page-layout: full
 author: "Igor Ruiz de los Mozos PhD"
-output:
-  pdf_document: default
-  latex_engine: xelatex
-  html_document: default
-  word_document: default
-editor_options:
-  chunk_output_type: console
 ---
+**Start Codespaces to run this practical on the cloud!**
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/FairTeach/codespaces_RStudio?quickstart=1)
+
+**Continue GitHub Codespaces practical on the cloud!**
+[![Continue GitHub Codespaces](https://img.shields.io/badge/GitHub-Codespaces-181717?logo=github)](https://github.com/codespaces)
     
 # Gene Expression DEG practical
 
@@ -112,6 +113,9 @@ se <- airway
 
 # Set directory
 # WARNIG, change to your system path!!!
+
+# Load directory to Knit
+knitr::opts_knit$set(root.dir = "/workspaces/codespaces_RStudio/course_materials/RNA_seq_DEG")
 
 # # Load directory from MAC
 # directory <-"/Users/mozosi/Dropbox (UCL-MN Team)/Class/Unav2021/ML/DGE"
@@ -484,11 +488,11 @@ Identifying outliers samples and sources of variation in the data.
 ```{r, warning = FALSE, message=FALSE}
 
 # If needed, install the pheatmap and RColorBrewer packages
-BiocManager::install("pheatmap")
-if (!require(pheatmap)) {
-    install.packages("pheatmap")
-    require(pheatmap)
-}
+# BiocManager::install("pheatmap")
+# if (!require(pheatmap)) {
+#     install.packages("pheatmap")
+#     require(pheatmap)
+# }
 library(pheatmap)
 
 # BiocManager::install("RColorBrewer")
@@ -843,14 +847,14 @@ clusterProfiler - http://bioconductor.org/packages/release/bioc/html/clusterProf
   
     
     
-```{r}
+```{r warning=FALSE}
 
 # Load clusterProfiler package  http://bioconductor.org/packages/release/bioc/html/clusterProfiler.html
-BiocManager::install("clusterProfiler")
-if (!require(clusterProfiler)) {
-    install.packages("clusterProfiler")
-    require(clusterProfiler)
-}
+# BiocManager::install("clusterProfiler")
+# if (!require(clusterProfiler)) {
+#     install.packages("clusterProfiler")
+#     require(clusterProfiler)
+# }
 library("clusterProfiler")
 library("enrichplot")
 # BiocManager::install("ggnewscale")
@@ -897,7 +901,8 @@ geneList <- sort(geneList, decreasing = TRUE)
 head(geneList)
 
 ## categorySize can be scaled by 'pvalue' or 'geneNum'
-p1 <- cnetplot(edox, categorySize="pvalue", foldChange=geneList)
+# p1 <- cnetplot(edox, categorySize="geneNum", foldChange=geneList) 
+p1 <- cnetplot(edox, size_category=0.5, foldChange=geneList) 
 
 # Enrichment Map
 # Enrichment map organizes enriched terms into a network with edges connecting overlapping gene sets. 
@@ -944,6 +949,7 @@ We should always keep record of the R packages used and their versions. In some 
     
 ```{r}
 devtools::session_info()
+
 ```
 
    
