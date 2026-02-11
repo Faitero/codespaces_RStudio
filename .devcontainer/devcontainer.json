@@ -33,7 +33,8 @@
         "streetsidesoftware.code-spell-checker",
         "streetsidesoftware.code-spell-checker-english",
         "tomoki1207.pdf",
-        "yzane.markdown-pdf"
+        "yzane.markdown-pdf",
+        "mathematic.vscode-pdf@0.1.6"
       ],
       "settings": {
         "r.rterm.option": ["--no-save", "--no-restore"],
