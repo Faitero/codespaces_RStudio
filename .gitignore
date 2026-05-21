@@ -2,9 +2,17 @@
 practicals/Gene_expression_DEG_practical_*
 practicals/Gene_expression_practical_UNAV_files/*
 practicals/R_Programming_basics_practical_files*
+practicals/DEXSeq_salmon_DTU_practical_files/*
 *.tex
 *.log
 
 *.tab
 *.rds
 Merge_GO_Gene_Set_Enrichment_Analysis_CC_.pdf
+
+
+# Remove big files 
+*.gtf
+*.RData
+*.fasta
+*.fa 
